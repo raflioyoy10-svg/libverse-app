@@ -1,59 +1,74 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 📚 LibVerse – Sistem Informasi Perpustakaan Digital
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi **LibVerse** merupakan Sistem Informasi Perpustakaan Digital berbasis web yang dikembangkan sebagai **Tugas Akhir / Ujian Kompetensi Keahlian (UKK)**.
 
-## About Laravel
+Aplikasi ini memiliki dua peran utama yaitu **Admin** dan **Member**, dengan fitur peminjaman buku, pengembalian, serta sistem denda keterlambatan yang berjalan otomatis.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🛠️ Teknologi yang Digunakan
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Framework** : Laravel 12  
+- **Bahasa Pemrograman** : PHP 8.2  
+- **Database** : MySQL  
+- **Frontend** : Blade Template + Custom CSS  
+- **Authentication** : Laravel Auth  
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 👥 Role & Hak Akses
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🔐 Admin
+Admin memiliki hak akses penuh untuk:
+- Mengelola data buku
+- Mengelola kategori buku
+- Melihat dan mengelola data peminjaman
+- Mengonfirmasi pengembalian buku
+- Mengelola denda keterlambatan
+- Stok buku otomatis bertambah setelah pengembalian dikonfirmasi
 
-## Laravel Sponsors
+### 👤 Member
+Member dapat:
+- Melihat daftar dan detail buku
+- Mengajukan peminjaman buku
+- Melihat status peminjaman
+- Melihat denda keterlambatan
+- Tidak dapat meminjam buku yang sama selama masih dipinjam
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## ✨ Fitur Utama
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- ✅ Login Admin & Member  
+- ✅ Role otomatis (admin & member memiliki halaman berbeda)  
+- ✅ Manajemen buku & kategori  
+- ✅ Sistem peminjaman dan pengembalian buku  
+- ✅ Batas waktu peminjaman  
+- ✅ Status peminjaman (menunggu, dipinjam, selesai)  
+- ✅ Perhitungan denda otomatis  
+- ✅ Admin konfirmasi pengembalian  
+- ✅ Tampilan modern & custom  
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## ⏰ Sistem Denda
 
-## Code of Conduct
+Denda akan muncul otomatis jika pengembalian melewati batas waktu.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Perhitungan denda dilakukan secara dinamis berdasarkan tanggal saat ini.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🚀 Cara Menjalankan Project
 
-## License
+1. Clone repository:
+```bash
+git clone https://github.com/raflioyoy10-svg/libverse-app.git
+cd libverse-app
+composer install
+cp .env.example .env
+php artisan key:generate
+Atur koneksi database di file .env
+php artisan migrate
+php artisan serve
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
