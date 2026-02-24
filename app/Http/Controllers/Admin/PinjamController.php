@@ -25,15 +25,20 @@ class PinjamController extends Controller
     }
 
     // =========================
-    // ✅ SETUJUI PINJAMAN
+    // ✅ SETUJUI PINJAMAN (PAKAI JAMINAN)
     // =========================
-    public function setujui(Pinjam $pinjam)
+    public function setujui(Request $request, Pinjam $pinjam)
     {
         if ($pinjam->status !== 'menunggu') {
             return back();
         }
 
-        DB::transaction(function () use ($pinjam) {
+        // 🔒 validasi jaminan (INI INTI REVISI UKK)
+        $request->validate([
+            'jaminan' => 'required|in:ktp,sim,kartu_pelajar'
+        ]);
+
+        DB::transaction(function () use ($pinjam, $request) {
 
             // ❌ stok habis
             if ($pinjam->buku->stok < 1) {
@@ -43,15 +48,16 @@ class PinjamController extends Controller
             // 🔽 kurangi stok
             $pinjam->buku->decrement('stok');
 
-            // ubah status
+            // ubah status + simpan jaminan
             $pinjam->update([
-                'status' => 'dipinjam',
+                'status'  => 'dipinjam',
+                'jaminan' => $request->jaminan
             ]);
 
             // 🔔 notifikasi
             Notifikasi::create([
                 'user_id' => $pinjam->user_id,
-                'pesan'   => '✅ Peminjaman buku "' . $pinjam->buku->judul . '" disetujui admin'
+                'pesan'   => '✅ Peminjaman buku "' . $pinjam->buku->judul . '" disetujui admin dengan jaminan'
             ]);
         });
 
@@ -120,16 +126,17 @@ class PinjamController extends Controller
         return back()->with('success', 'Buku berhasil dikembalikan');
     }
 
-    public function daftar()
+   public function daftar()
 {
     $pinjaman = Pinjam::with(['buku', 'user'])
         ->where('status', 'dipinjam')
-        ->where('tgl_kembali', '>', now()) // 🔥 belum habis waktu
         ->orderBy('tgl_kembali', 'asc')
         ->get();
 
     return view('admin.peminjaman.daftar', compact('pinjaman'));
 }
+
+
     public function detail($id)
     {
         $pinjam = Pinjam::with(['user','buku.kategori'])
@@ -138,19 +145,32 @@ class PinjamController extends Controller
         return view('admin.peminjaman.detail', compact('pinjam'));
     }
 
-public function selesai($id)
-{
-    $pinjam = Pinjam::findOrFail($id);
+    public function selesai($id)
+    {
+        $pinjam = Pinjam::findOrFail($id);
 
-    // ❌ jika sudah selesai atau denda, jangan diproses
-    if(in_array($pinjam->status, ['selesai', 'denda'])) {
-        return back()->with('error', 'Peminjaman ini sudah diproses.');
+        if(in_array($pinjam->status, ['selesai', 'denda'])) {
+            return back()->with('error', 'Peminjaman ini sudah diproses.');
+        }
+
+        return redirect()->route('admin.pengembalian')
+            ->with('success', 'Peminjaman sudah selesai, silahkan proses pengembalian di halaman Pengembalian.');
     }
 
-    // ⚡ logika: pindahkan ke halaman pengembalian (status tetap dipinjam)
-    // kita bisa cuma redirect ke halaman pengembalian
-    return redirect()->route('admin.pengembalian')
-        ->with('success', 'Peminjaman sudah selesai, silahkan proses pengembalian di halaman Pengembalian.');
+    // Jaminan
+    public function updateJaminan(Request $request,$id)
+{
+    $request->validate([
+        'jaminan' => 'required|in:ktp,sim,kartu_pelajar'
+    ]);
+
+    $pinjam = Pinjam::findOrFail($id);
+
+    $pinjam->update([
+        'jaminan' => $request->jaminan
+    ]);
+
+    return back()->with('success','Jaminan berhasil diubah');
 }
 
 }

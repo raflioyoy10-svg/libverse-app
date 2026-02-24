@@ -19,12 +19,6 @@
     padding:32px;
     border-radius:20px;
     box-shadow:0 15px 35px rgba(0,0,0,0.08);
-    transition:0.3s;
-}
-
-.detail-box:hover{
-    transform:translateY(-2px);
-    box-shadow:0 20px 50px rgba(0,0,0,0.1);
 }
 
 /* Cover buku */
@@ -35,7 +29,6 @@
     overflow:hidden;
     background:#f0f2f5;
 }
-
 .book-cover img{
     width:100%;
     height:100%;
@@ -49,13 +42,11 @@
     margin-bottom:12px;
     color:#1f2937;
 }
-
 .book-meta{
     font-size:14px;
     color:#4b5563;
     margin-bottom:8px;
 }
-
 .stock{
     display:inline-block;
     margin-top:10px;
@@ -67,8 +58,8 @@
     font-weight:600;
 }
 
-/* Form durasi pinjam */
-select[name="masa_pinjam"]{
+/* Select */
+.form-control{
     padding:10px 12px;
     border-radius:10px;
     border:1px solid #d1d5db;
@@ -77,7 +68,7 @@ select[name="masa_pinjam"]{
     font-size:14px;
 }
 
-/* Tombol pinjam */
+/* Tombol */
 .btn-primary{
     margin-top:20px;
     padding:14px;
@@ -88,17 +79,9 @@ select[name="masa_pinjam"]{
     color:#fff;
     font-weight:600;
     font-size:15px;
-    cursor:pointer;
-    transition:0.25s;
 }
-
-.btn-primary:hover{
-    background:#2563eb;
-}
-
 .btn-primary:disabled{
     background:#9ca3af;
-    cursor:not-allowed;
 }
 
 /* Link kembali */
@@ -111,37 +94,6 @@ select[name="masa_pinjam"]{
     color:#1f2937;
     text-decoration:none;
     margin-bottom:24px;
-    transition:0.2s;
-}
-
-.back-link:hover{
-    color:#3b82f6;
-    transform:translateX(-2px);
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px){
-    .detail-box{
-        grid-template-columns:1fr;
-        padding:20px;
-    }
-
-    .book-cover{
-        max-width:220px;
-        margin:0 auto;
-    }
-
-    .book-title{
-        font-size:22px;
-        margin-top:16px;
-        text-align:center;
-    }
-
-    .book-meta,
-    .stock{
-        text-align:center;
-        display:block;
-    }
 }
 </style>
 
@@ -162,6 +114,7 @@ select[name="masa_pinjam"]{
 
             <div class="book-meta"><strong>Penulis:</strong> {{ $buku->penulis }}</div>
             <div class="book-meta"><strong>Kategori:</strong> {{ $buku->kategori->nama_kategori ?? '-' }}</div>
+
             <div class="stock">
                 {{ $buku->stok > 0 ? 'Stok tersedia: '.$buku->stok : 'Stok habis' }}
             </div>
@@ -170,20 +123,33 @@ select[name="masa_pinjam"]{
             <form action="{{ route('member.pinjam', $buku->id) }}" method="POST">
                 @csrf
 
-                <label for="masa_pinjam"
-                       style="font-size:14px; font-weight:600; display:block; margin-top:16px;">
+                {{-- DURASI --}}
+                <label style="font-size:14px;font-weight:600;margin-top:16px;display:block">
                     Pilih Durasi Peminjaman
                 </label>
-
-                <select name="masa_pinjam"
-                        class="form-control"
-                        required
-                        {{ $sedangDipinjam ? 'disabled' : '' }}>
+                <select name="masa_pinjam" class="form-control" required {{ $sedangDipinjam ? 'disabled' : '' }}>
                     <option value="">-- Pilih Lama Pinjam --</option>
                     @for($i = 1; $i <= 7; $i++)
                         <option value="{{ $i }}">{{ $i }} Hari</option>
                     @endfor
                 </select>
+
+                {{-- JAMINAN --}}
+                <label style="font-size:14px; font-weight:600; display:block; margin-top:16px;">
+                    Pilih Jaminan
+                </label>
+
+                <select name="jaminan"
+                        required
+                        class="form-control"
+                        {{ $sedangDipinjam ? 'disabled' : '' }}
+                        style="padding:10px 12px;border-radius:10px;border:1px solid #d1d5db;width:100%;margin-top:6px;">
+                    <option value="">-- Pilih Jaminan --</option>
+                    <option value="ktp">KTP</option>
+                    <option value="sim">SIM</option>
+                    <option value="kartu_pelajar">Kartu Pelajar</option>
+                </select>
+
 
                 @if($sedangDipinjam)
                     <button type="button" class="btn-primary" disabled>
@@ -199,7 +165,7 @@ select[name="masa_pinjam"]{
             </form>
 
             <p style="margin-top:12px;font-size:13px;color:#6b7280">
-                📌 Buku diambil langsung di perpustakaan setelah disetujui admin
+                📌 Peminjaman akan diproses setelah disetujui admin
             </p>
             @endauth
 

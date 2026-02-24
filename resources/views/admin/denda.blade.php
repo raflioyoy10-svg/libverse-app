@@ -152,10 +152,10 @@ td{
 }
 </style>
 
-{{-- ================= HEADER ================= --}}
+
 <div class="page-header">
     <div>
-        <div class="page-title">💸 Data Denda Member</div>
+        <div class="page-title"> Data Denda Member</div>
         <div class="page-sub">Daftar keterlambatan pengembalian buku</div>
     </div>
 
@@ -187,13 +187,13 @@ td{
     <tbody>
     @foreach($denda as $p)
         <tr>
-            {{-- MEMBER --}}
+     
             <td>
                 <div class="user-name">{{ $p->user->nama }}</div>
                 <div class="user-email">{{ $p->user->email }}</div>
             </td>
 
-            {{-- BUKU --}}
+
             <td>
                 <div class="book-info">
                     <img src="{{ $p->buku->gambar 
@@ -203,32 +203,27 @@ td{
                 </div>
             </td>
 
-            {{-- DEADLINE --}}
+            
             <td class="text-center">
                 {{ $p->tgl_kembali->format('d M Y') }}
             </td>
 
-            {{-- TELAT --}}
+          
             <td class="text-center">
                 <span class="badge-danger">
                     {{ ceil($p->hari_telat) }} hari
                 </span>
             </td>
 
-            {{-- DENDA --}}
+      
             <td class="text-center badge-money">
                 Rp {{ number_format(round($p->total_denda), 0, ',', '.') }}
             </td>
 
-
-            {{-- AKSI --}}
             <td class="text-center">
-                <form action="{{ route('admin.denda.konfirmasi', $p->id) }}" method="POST">
-                    @csrf
-                    <button class="btn-action">
-                        ✔ Bayar & Dikembalikan
-                    </button>
-                </form>
+                <a href="{{ route('admin.denda.bayar', $p->id) }}" class="btn-action">
+                     Bayar Denda
+                </a>
             </td>
         </tr>
     @endforeach

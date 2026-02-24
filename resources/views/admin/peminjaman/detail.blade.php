@@ -10,13 +10,11 @@
     font-weight:700;
     margin-bottom:20px;
 }
-
 .card-modern{
     border:none;
     border-radius:18px;
     box-shadow:0 12px 32px rgba(0,0,0,.08);
 }
-
 .book-cover{
     width:100%;
     height:360px;
@@ -24,26 +22,21 @@
     border-radius:14px;
     box-shadow:0 10px 28px rgba(0,0,0,.12);
 }
-
 .info-row{
     padding:10px 0;
     border-bottom:1px dashed #e5e7eb;
 }
-
 .info-row:last-child{
     border-bottom:none;
 }
-
 .label{
     color:#6b7280;
     font-size:14px;
 }
-
 .value{
     font-weight:600;
     font-size:15px;
 }
-
 .badge-status{
     padding:8px 14px;
     border-radius:999px;
@@ -109,6 +102,14 @@
                     <div class="col-5 label">Batas Pengembalian</div>
                     <div class="col-7 value text-danger">
                         {{ \Carbon\Carbon::parse($pinjam->tgl_kembali)->format('d M Y') }}
+                    </div>
+                </div>
+
+                {{-- 🔐 JAMINAN --}}
+                <div class="info-row d-flex">
+                    <div class="col-5 label">Jaminan</div>
+                    <div class="col-7 value">
+                        {{ strtoupper(str_replace('_',' ', $pinjam->jaminan)) }}
                     </div>
                 </div>
 

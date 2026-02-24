@@ -200,3 +200,30 @@ Route::prefix('admin')
     Route::get('/ulasan', [UlasanController::class, 'index'])
         ->name('admin.ulasan.index');
 });
+
+
+Route::get('/admin/verifikasi/{id}', [AdminPengembalianController::class, 'verifikasi'])
+    ->name('admin.verifikasi');
+
+Route::post('/admin/verifikasi/{id}', [AdminPengembalianController::class, 'prosesVerifikasi'])
+    ->name('admin.verifikasi.proses');
+
+Route::get('/admin/verifikasi/{id}', [AdminPengembalianController::class, 'verifikasi'])
+    ->name('admin.verifikasi');
+
+Route::get('/admin/pengembalian/selesai/{id}', [AdminPengembalianController::class, 'selesai'])
+    ->name('admin.pengembalian.selesai');
+
+
+    // proses bayar denda
+
+Route::get('/admin/denda/bayar/{id}', [AdminPengembalianController::class,'bayarDenda'])
+    ->name('admin.denda.bayar');
+
+Route::post('/admin/denda/proses/{id}', [AdminPengembalianController::class,'prosesBayarDenda'])
+    ->name('admin.denda.proses');
+
+    //Jaminan
+Route::post('/admin/peminjaman/update-jaminan/{id}',
+[PinjamController::class,'updateJaminan'])   
+->name('admin.peminjaman.updateJaminan');

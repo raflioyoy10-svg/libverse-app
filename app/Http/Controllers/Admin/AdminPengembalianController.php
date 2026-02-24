@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pinjam;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
 
 class AdminPengembalianController extends Controller
 {
@@ -12,17 +15,13 @@ class AdminPengembalianController extends Controller
      * =========================
      * HALAMAN PENGEMBALIAN
      * =========================
-     * tampilkan:
-     * - status dipinjam
-     * - waktu SUDAH habis
-     * - BELUM denda
      */
     public function index()
     {
-        $this->updateDenda(); // 🔥 aman, tidak ubah logika
+        $this->updateDenda();
 
         $pinjaman = Pinjam::with(['user','buku'])
-            ->where('status', 'dipinjam') // tampilkan semua yang sedang dipinjam
+            ->where('status', 'dipinjam')
             ->orderBy('tgl_kembali', 'asc')
             ->get();
 
@@ -32,6 +31,7 @@ class AdminPengembalianController extends Controller
     /**
      * =========================
      * KONFIRMASI PENGEMBALIAN
+     * (KONDISI BAIK)
      * =========================
      */
     public function konfirmasi($id)
@@ -40,47 +40,56 @@ class AdminPengembalianController extends Controller
 
             $pinjam = Pinjam::with('buku')->findOrFail($id);
 
-            // ❌ cegah dobel proses
-            if ($pinjam->status !== 'dipinjam') {
-                return;
-            }
+            if ($pinjam->status !== 'dipinjam') return;
 
-            // ✅ ubah status
             $pinjam->update([
+                'kondisi' => 'baik',
+                'denda' => 0,
+                'metode_bayar' => null,
                 'status' => 'selesai'
             ]);
 
-            // ✅ stok kembali
+            DB::table('pengembalian')->insert([
+                'pinjam_id' => $pinjam->id,
+                'tgl_dikembalikan' => now(),
+                'kondisi_buku' => 'baik',
+                'total_denda' => 0,
+                'metode_bayar' => null
+            ]);
+
             $pinjam->buku->increment('stok');
         });
 
-        return back()->with(
-            'success',
-            'Pengembalian berhasil dikonfirmasi & stok buku bertambah'
-        );
+        return back()->with('success','Pengembalian berhasil dikonfirmasi');
     }
 
     /**
      * =========================
      * UPDATE DENDA OTOMATIS
+     * (TELAT)
      * =========================
-     * logika:
-     * - lewat deadline
-     * - +1 hari
-     * - belum dikembalikan
      */
     private function updateDenda()
     {
-        $pinjamTelat = Pinjam::where('status', 'dipinjam')
-            ->where('tgl_kembali', '<', now()->subDay()) // 🔥 H+1
-            ->get();
+        $pinjaman = Pinjam::where('status','dipinjam')->get();
 
-        foreach ($pinjamTelat as $p) {
-            $p->update([
-                'status' => 'denda'
-            ]);
+        foreach($pinjaman as $pinjam){
+
+            if(now()->gt($pinjam->tgl_kembali)){
+
+                $hariTelat = now()->startOfDay()
+                    ->diffInDays(Carbon::parse($pinjam->tgl_kembali)->startOfDay());
+
+                $denda = $hariTelat * 3000;
+
+                $pinjam->update([
+                    'status' => 'denda',
+                    'denda' => $denda
+                ]);
+            }
         }
     }
+
 
     /**
      * =========================
@@ -92,16 +101,17 @@ class AdminPengembalianController extends Controller
         $this->updateDenda();
 
         $denda = Pinjam::with(['user','buku'])
-            ->where('status', 'denda')
-            ->orderBy('tgl_kembali', 'asc')
+            ->where('status','denda')
+            ->orderBy('tgl_kembali','asc')
             ->get();
 
         return view('admin.denda', compact('denda'));
     }
 
+
     /**
      * =========================
-     * KONFIRMASI DENDA
+     * KONFIRMASI DENDA TELAT
      * =========================
      */
     public function konfirmasiDenda($id)
@@ -123,24 +133,130 @@ class AdminPengembalianController extends Controller
 
         return back()->with(
             'success',
-            'Denda dibayar & buku berhasil dikembalikan'
+            'Denda berhasil dibayar & buku dikembalikan'
         );
     }
 
-    public function pindahKePengembalian($id)
-{
-    $pinjam = Pinjam::findOrFail($id);
-
-    // ❌ hanya bisa diproses jika status masih dipinjam
-    if ($pinjam->status !== 'dipinjam') {
-        return back()->with('error', 'Peminjaman ini sudah diproses.');
+    public function bayarDenda($id)
+    {
+        $pinjam = Pinjam::with(['user','buku'])->findOrFail($id);
+        return view('admin.bayar_denda', compact('pinjam'));
     }
 
-    // ⚡ Jangan ubah status, biar muncul di halaman pengembalian
-    // Status tetap "dipinjam" sampai admin konfirmasi
-    return redirect()->route('admin.pengembalian')
-        ->with('success', 'Peminjaman dipindahkan ke halaman pengembalian. Silahkan konfirmasi admin.');
-}
+public function prosesBayarDenda(Request $request,$id)
+{
+    $request->validate([
+        'metode_bayar' => 'required|in:cash,qris',
+        'kondisi' => 'required|in:baik,rusak,hilang'
+    ]);
 
+        DB::transaction(function() use ($request,$id){
+
+            $pinjam = Pinjam::with('buku')->findOrFail($id);
+
+            if($pinjam->status !== 'denda'){
+                return;
+            }
+
+            // hitung tambahan kerusakan
+            $tambahan = 0;
+
+            if($request->kondisi === 'rusak'){
+                $tambahan = 80000;
+            }elseif($request->kondisi === 'hilang'){
+                $tambahan = 120000;
+            }
+
+            // total final
+            $totalFinal = $pinjam->denda + $tambahan;
+
+            // update pinjam
+            $pinjam->update([
+                'kondisi' => $request->kondisi,
+                'denda' => $totalFinal,
+                'metode_bayar' => $request->metode_bayar,
+                'status' => 'selesai'
+            ]);
+
+            //  masuk tabel pengembalian
+            DB::table('pengembalian')->insert([
+                'pinjam_id' => $pinjam->id,
+                'tgl_dikembalikan' => now(),
+                'kondisi_buku' => $request->kondisi,
+                'total_denda' => $totalFinal,
+                'metode_bayar' => $request->metode_bayar
+            ]);
+
+            // stok balik
+            $pinjam->buku->increment('stok');
+        });
+
+        return redirect()->route('admin.denda')
+            ->with('success','Denda berhasil dibayar & buku dikembalikan');
+    }
+
+
+    /**
+     * =========================
+     * HALAMAN VERIFIKASI
+     * (RUSAK / HILANG)
+     * =========================
+     */
+    public function verifikasi($id)
+    {
+        $pinjam = Pinjam::with(['user','buku'])->findOrFail($id);
+        return view('admin.verifikasi', compact('pinjam'));
+    }
+
+    /**
+     * =========================
+     * PROSES VERIFIKASI
+     * =========================
+     */
+    public function prosesVerifikasi(Request $request, $id)
+    {
+        $request->validate([
+            'kondisi' => 'required|in:baik,rusak,hilang',
+            'metode_bayar' => 'required|in:cash,qris'
+        ]);
+
+        DB::transaction(function () use ($request, $id) {
+
+        $pinjam = Pinjam::with('buku')->findOrFail($id);
+
+        $denda = 0;
+        if ($request->kondisi === 'rusak') {
+            $denda = 150000;
+        } elseif ($request->kondisi === 'hilang') {
+            $denda = 300000;
+        }
+
+        // update pinjam
+        $pinjam->update([
+            'kondisi' => $request->kondisi,
+            'denda' => $denda,
+            'metode_bayar' => $request->metode_bayar,
+            'status' => 'selesai'
+        ]);
+
+        DB::table('pengembalian')->insert([
+            'pinjam_id' => $pinjam->id,
+            'tgl_dikembalikan' => now(),
+            'kondisi_buku' => $request->kondisi,
+            'total_denda' => $denda,
+            'metode_bayar' => $request->metode_bayar
+        ]);
+
+        // stok balik
+        $pinjam->buku->increment('stok');
+        });
+
+
+        return redirect()
+            ->route('admin.pengembalian')
+            ->with('success', 'Verifikasi pengembalian berhasil');
+    }
+
+    
 
 }

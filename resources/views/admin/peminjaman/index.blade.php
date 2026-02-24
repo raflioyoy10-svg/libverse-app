@@ -2,7 +2,6 @@
 
 @section('content')
 
-{{-- ================= STYLE ================= --}}
 <style>
 :root{
     --primary:#2563eb;
@@ -12,16 +11,12 @@
     --muted:#64748b;
     --border:#e5e7eb;
 }
-
-/* CARD */
 .table-card{
     background:#fff;
     border-radius:22px;
     box-shadow:0 20px 40px rgba(0,0,0,.08);
     padding:26px;
 }
-
-/* HEADER */
 .page-title{
     font-size:28px;
     font-weight:800;
@@ -31,8 +26,6 @@
     color:var(--muted);
     margin-bottom:24px;
 }
-
-/* SEARCH */
 .search-box{
     position:relative;
     margin-bottom:20px;
@@ -55,8 +48,6 @@
     border-color:var(--primary);
     box-shadow:0 0 0 3px rgba(37,99,235,.15);
 }
-
-/* TABLE */
 .table-modern{
     border-collapse:separate;
     border-spacing:0 12px;
@@ -81,8 +72,6 @@
     border:none;
     vertical-align:middle;
 }
-
-/* BADGE */
 .badge{
     padding:6px 14px;
     border-radius:999px;
@@ -90,10 +79,6 @@
     font-weight:700;
 }
 .badge-wait{ background:#fff7ed; color:#c2410c; }
-.badge-ok{ background:#ecfdf5; color:#047857; }
-.badge-no{ background:#fef2f2; color:#b91c1c; }
-
-/* BUTTON */
 .btn-action{
     padding:6px 14px;
     border-radius:12px;
@@ -105,16 +90,11 @@
     background:var(--success);
     color:#fff;
 }
-.btn-reject{
-    background:var(--danger);
-    color:#fff;
-}
 .btn-action:hover{
     opacity:.9;
 }
 </style>
 
-{{-- ================= HEADER ================= --}}
 <div class="mb-4">
     <div class="page-title"> Pengajuan Peminjaman Buku</div>
     <div class="page-subtitle">
@@ -128,14 +108,9 @@
 </div>
 @endif
 
-{{-- ================= SEARCH ================= --}}
 <div class="search-box">
     <i class="fa-solid fa-magnifying-glass"></i>
-    <input 
-        type="text" 
-        id="search" 
-        placeholder="Cari nama member atau judul buku..."
-    >
+    <input type="text" id="search" placeholder="Cari nama member atau judul buku...">
 </div>
 
 @if($pinjaman->isEmpty())
@@ -154,6 +129,7 @@
     <th class="text-center">Berakhir</th>
     <th class="text-center">Durasi</th>
     <th class="text-center">Sisa</th>
+    <th class="text-center">Jaminan</th>
     <th class="text-center">Status</th>
     <th class="text-center">Aksi</th>
 </tr>
@@ -175,17 +151,13 @@
     <td class="fw-semibold">{{ $p->user->nama }}</td>
     <td>{{ $p->buku->judul }}</td>
 
-    <td class="text-center">
-        {{ $p->tgl_pinjam->format('d M Y') }}
-    </td>
+    <td class="text-center">{{ $p->tgl_pinjam->format('d M Y') }}</td>
 
     <td class="text-center">
         {{ $p->tgl_kembali ? $p->tgl_kembali->format('d M Y') : '-' }}
     </td>
 
-    <td class="text-center">
-        {{ $durasi ? $durasi.' hari' : '-' }}
-    </td>
+    <td class="text-center">{{ $durasi ? $durasi.' hari' : '-' }}</td>
 
     <td class="text-center fw-semibold">
         @if($sisa === null)
@@ -197,35 +169,36 @@
         @endif
     </td>
 
+    {{-- 🔥 JAMINAN AUTO UPDATE --}}
     <td class="text-center">
-        @if($p->status == 'menunggu')
-            <span class="badge badge-wait">Menunggu</span>
-        @elseif($p->status == 'disetujui')
-            <span class="badge badge-ok">Disetujui</span>
-        @else
-            <span class="badge badge-no">Ditolak</span>
-        @endif
+        <form action="{{ route('admin.peminjaman.updateJaminan',$p->id) }}" method="POST">
+        @csrf
+        <select name="jaminan" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="ktp" {{ $p->jaminan == 'ktp' ? 'selected' : '' }}>KTP</option>
+            <option value="sim" {{ $p->jaminan == 'sim' ? 'selected' : '' }}>SIM</option>
+            <option value="kartu_pelajar" {{ $p->jaminan == 'kartu_pelajar' ? 'selected' : '' }}>Kartu Pelajar</option>
+        </select>
+        </form>
     </td>
 
     <td class="text-center">
-        @if($p->status == 'menunggu')
-        <div class="d-flex gap-2 justify-content-center">
-            <form action="{{ route('admin.peminjaman.setujui',$p->id) }}" method="POST">
-                @csrf
-                <button class="btn-action btn-approve">
-                    <i class="fa-solid fa-check"></i>
-                </button>
-            </form>
-            <form action="{{ route('admin.peminjaman.tolak',$p->id) }}" method="POST">
-                @csrf
-                <button class="btn-action btn-reject">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </form>
-        </div>
-        @else
-            <span class="text-muted">—</span>
-        @endif
+        <span class="badge badge-wait">Menunggu</span>
+    </td>
+
+    <td class="text-center">
+        <form action="{{ route('admin.peminjaman.setujui',$p->id) }}" method="POST" class="d-flex gap-2 justify-content-center">
+            @csrf
+
+            <select name="jaminan" class="form-select form-select-sm" required>
+                <option value="ktp" {{ $p->jaminan == 'ktp' ? 'selected' : '' }}>KTP</option>
+                <option value="sim" {{ $p->jaminan == 'sim' ? 'selected' : '' }}>SIM</option>
+                <option value="kartu_pelajar" {{ $p->jaminan == 'kartu_pelajar' ? 'selected' : '' }}>Kartu Pelajar</option>
+            </select>
+
+            <button class="btn-action btn-approve" type="submit">
+                <i class="fa-solid fa-check"></i>
+            </button>
+        </form>
     </td>
 </tr>
 @endforeach
@@ -236,7 +209,6 @@
 </div>
 @endif
 
-{{-- ================= SEARCH JS ================= --}}
 <script>
 document.getElementById('search').addEventListener('keyup', function(){
     let filter = this.value.toLowerCase();

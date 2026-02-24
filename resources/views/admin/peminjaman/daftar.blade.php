@@ -64,9 +64,6 @@
     border:none;
     padding:14px;
 }
-.table tbody tr{
-    transition:.2s ease;
-}
 .table tbody tr:hover{
     background:#f9fafb;
 }
@@ -102,7 +99,7 @@
     border-radius:10px;
     font-size:13px;
     font-weight:600;
-    padding:6px 14px;
+    padding:6px 16px;
     border:none;
 }
 .btn-detail{
@@ -111,18 +108,6 @@
 }
 .btn-detail:hover{
     background:#e5e7eb;
-}
-.btn-done{
-    background:#dcfce7;
-    color:#166534;
-}
-.btn-done:hover{
-    background:#bbf7d0;
-}
-
-/* ================= EMPTY ================= */
-.alert-info{
-    border-radius:14px;
 }
 </style>
 
@@ -158,6 +143,7 @@
                         <th>Tgl Pinjam</th>
                         <th>Deadline</th>
                         <th>Sisa Hari</th>
+                        <th class="text-center">Jaminan</th>
                         <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -192,22 +178,21 @@
                             @endif
                         </td>
 
-                        <td class="text-center">
-                            <div class="d-flex justify-content-center gap-2">
-                                <a href="{{ route('admin.peminjaman.detail', $p->id) }}"
-                                   class="btn-action btn-detail">
-                                    Detail
-                                </a>
+                        {{-- JAMINAN --}}
+                        <td class="text-center fw-semibold text-uppercase">
+                            @if($p->jaminan)
+                                {{ str_replace('_',' ', $p->jaminan) }}
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
 
-                                <form action="{{ route('admin.peminjaman.selesaikan', $p->id) }}"
-                                      method="POST"
-                                      onsubmit="return confirm('Pindahkan ke halaman pengembalian?')">
-                                    @csrf
-                                    <button class="btn-action btn-done">
-                                        Selesai
-                                    </button>
-                                </form>
-                            </div>
+                        {{-- AKSI --}}
+                        <td class="text-center">
+                            <a href="{{ route('admin.peminjaman.detail', $p->id) }}"
+                               class="btn-action btn-detail">
+                                Detail
+                            </a>
                         </td>
                     </tr>
                 @endforeach
@@ -221,7 +206,6 @@
     </div>
 </div>
 
-{{-- SEARCH JS --}}
 <script>
 document.getElementById('searchInput').addEventListener('keyup', function(){
     let value = this.value.toLowerCase();

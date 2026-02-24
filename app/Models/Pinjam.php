@@ -14,12 +14,13 @@ class Pinjam extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'user_id',
-        'buku_id',
-        'tgl_pinjam',
-        'tgl_kembali',
-        'status'
-    ];
+    'user_id',
+    'buku_id',
+    'tgl_pinjam',
+    'tgl_kembali',
+    'status',
+    'jaminan' // 🔥 INI KUNCI NYA
+];
 
     protected $casts = [
         'tgl_pinjam'  => 'datetime',
@@ -43,20 +44,24 @@ public function getHariTelatAttribute()
         return 0;
     }
 
-    $deadline = Carbon::parse($this->tgl_kembali);
-    $hariIni  = now();
+    $deadline = Carbon::parse($this->tgl_kembali)->startOfDay();
+    $hariIni  = now()->startOfDay();
 
+    // 🔥 masih hari deadline = BELUM DENDA
     if ($hariIni <= $deadline) {
         return 0;
     }
 
+    // 🔥 mulai hitung H+1
     return $deadline->diffInDays($hariIni);
 }
+
 
 public function getTotalDendaAttribute()
 {
     return $this->hari_telat * 3000;
 }
+
 
 }
 

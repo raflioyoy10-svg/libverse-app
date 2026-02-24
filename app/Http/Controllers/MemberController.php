@@ -41,22 +41,23 @@ class MemberController extends Controller
         return back()->with('error', 'Maaf, stok buku ini sedang habis.');
     }
 
-    // ================= TAMBAHAN: CEK PINJAM BUKU YANG SAMA =================
+    // ================= CEK PINJAM BUKU SAMA =================
     $sudahPinjam = Pinjam::where('user_id', auth()->id())
         ->where('buku_id', $buku->id)
-        ->whereIn('status', ['menunggu', 'dipinjam']) // masih aktif
+        ->whereIn('status', ['menunggu', 'dipinjam'])
         ->exists();
 
     if ($sudahPinjam) {
         return back()->with(
             'error',
-            'Kamu masih memiliki peminjaman aktif untuk buku ini. Kembalikan dulu sebelum meminjam lagi.'
+            'Kamu masih memiliki peminjaman aktif untuk buku ini.'
         );
     }
 
-    // ================= VALIDASI =================
+    // ================= VALIDASI (INI KUNCI UKK) =================
     $request->validate([
         'masa_pinjam' => 'required|integer|min:1|max:7',
+        'jaminan'     => 'required|in:ktp,sim,kartu_pelajar'
     ]);
 
     $masaPinjam = (int) $request->masa_pinjam;
@@ -66,9 +67,9 @@ class MemberController extends Controller
         'user_id'     => auth()->id(),
         'buku_id'     => $buku->id,
         'tgl_pinjam'  => now(),
-        // 🔥 FIX: 24 JAM REAL
         'tgl_kembali' => now()->addHours(24 * $masaPinjam),
         'status'      => 'menunggu',
+        'jaminan'     => $request->jaminan // 🔥 FIX UTAMA
     ]);
 
     return redirect()->route('member.pinjaman')
